@@ -4,6 +4,8 @@ package staff;
 import DBconnector.DBconnector;
 import admin.*;
 import static admin.adminAdd_Participants.isInteger;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import javax.swing.JOptionPane;
 
 
@@ -150,16 +152,35 @@ public class staffParticipants_Add extends javax.swing.JFrame {
         } else if (!isInteger(age.getText())){
             JOptionPane.showMessageDialog(null, "Please input a valid input.");
         } else {
-            
-            if (dbc.insertData("INSERT INTO participants (Participants_Name, age, Gender, e_Id)"
-                  + "VALUES('"+ name.getText() + "','"+ age.getText() +"','"+ gender.getSelectedItem() +"','"+ eventId.getText() +"')"))
-            {
-                JOptionPane.showMessageDialog(null, "added successfully.");
-                adminParticipants close = new adminParticipants();
-                close.setVisible(true);
+            String eventStatus = "";
+            try {
+                ResultSet rs = dbc.getData("SELECT * FROM event_list WHERE Id = '"+ eventId.getText() +"'");
+
+                if (rs.next()) {
+                    eventStatus = rs.getString("Status"); 
+                    System.out.println("Event Status: " + eventStatus); 
+                }
+                rs.close(); 
                 this.dispose();
+            } catch (SQLException ex) {
+                System.out.println("Errors: " + ex.getMessage());
+            }
+
+            
+            if (eventStatus.equalsIgnoreCase("canceled") || eventStatus.equalsIgnoreCase("completed")){
+                JOptionPane.showMessageDialog(null, "Can't participate this event.");
             } else {
-                JOptionPane.showMessageDialog(null, "Connection Error!");
+                    if (dbc.insertData("INSERT INTO participants (Participants_Name, age, Gender, e_Id)"
+                      + "VALUES('"+ name.getText() + "','"+ age.getText() +"','"+ gender.getSelectedItem() +"','"+ eventId.getText() +"')"))
+                {
+                    JOptionPane.showMessageDialog(null, "added successfully.");
+                    adminParticipants close = new adminParticipants();
+                    System.out.println("Event Status: " + eventStatus);
+                    close.setVisible(true);
+                    this.dispose();
+                } else {
+                    JOptionPane.showMessageDialog(null, "Connection Error!");
+                }
             }
         }
     }//GEN-LAST:event_addButtonActionPerformed
